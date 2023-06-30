@@ -1,0 +1,119 @@
+
+
+<style>
+    .blue{
+        color: blue;
+    }
+    .red{
+        color: red;
+    }
+</style>
+<div id="app">
+
+</div>
+
+<script>
+    function h(tag , props , children){
+        return {
+            tag,
+            props,
+            children
+        }
+    }
+
+    const oldVnode = h('div',null,[h('span',{class:'blue'},'312321')])
+
+    //挂在函数
+    function mount(vnode,container){
+        // console.log(vnode);
+        const el = vnode.el= document.createElement(vnode.tag)
+        if(vnode.props){
+            for(const key in vnode.props){
+                const value = vnode.props[key]
+                el.setAttribute(key,value)
+            }
+        }
+        if(vnode.children){
+            if(typeof vnode.children === "string"){
+                el.textContent = vnode.children
+            }else {
+                vnode.children.forEach(children => {
+                    mount(children , el)
+                });
+            }
+        }
+        container.appendChild(el)
+    }
+    mount(oldVnode,document.getElementById('app'))
+
+    console.log(oldVnode);
+
+    //更新算法
+    function patch(oldVnode,newVnode){
+        if(oldVnode.tag === newVnode.tag){
+            //props
+            const ele = newVnode.el = oldVnode.el
+            console.log(ele);
+            const newProps = newVnode.props || {}
+            const oldProps = oldVnode.props || {} 
+            for(const key in newProps){
+                if(newProps[key]!==oldProps[key]){
+                    ele.setAttribute(key,newProps)
+                }
+            }
+            for(const key in oldProps){
+                if(!(key in newProps)){
+                    ele.removeAttribute(key)
+                }
+            }
+            console.info('//patch')
+            
+            //child
+            const newChildren = newVnode.children
+            const oldChildren = oldVnode.children
+            // console.log();
+            // console.log(oldVnode.children);
+            if(typeof newChildren ==="string"){
+                if(typeof oldChildren ==="string"){
+                    if(newChildren !== oldChildren){
+                        el.textContent = newChildren
+                    }
+                }else{
+                    ele.textContent = newChildren
+                }
+            }else{
+                console.log('新child不是字符串');
+                if(typeof oldChildren ==="string"){
+                    console.log('旧的child是字符串');
+                    ele.innerHTML = ''
+                    newChildren.forEach(item =>{
+                        mount(item , ele)
+                    })
+                }else{
+                    console.log('旧的child是数组');
+                    let minLength = Math.min(newChildren.length,oldChildren.length)
+                    for(let i=0 ;i<minLength;i++){
+                    console.info('patch');
+                        patch(oldChildren[i],newChildren[i])
+                    }
+                    if(oldChildren.length<newChildren.length){
+                        newChildren.slice(oldChildren.length).forEach(child =>{
+                            mount(child,el)
+                        })
+                    }else if (oldChildren.length>newChildren.length){
+                        oldChildren.slice(newChildren.length).forEach(child =>{
+                            el.removeChild(child.el)
+                        })
+                        // el.removeNode(child)
+                    }
+                }
+            }
+        }
+        
+    }
+    const newVnode = h('div',null,[h('span',{class:'blue'},[
+        h('div',{class:'red'},'更新页面'),
+        h('div',{class:'blue'},'更新页面')
+    ])])
+    patch(oldVnode,newVnode)
+</script>
